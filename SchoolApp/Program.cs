@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using SchoolApp.Data;
 using SchoolApp.Repositories;
@@ -33,6 +35,25 @@ namespace SchoolApp
 
             builder.Services.AddRepositories();
 
+            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(options =>
+                {
+                    options.LoginPath = "/User/Login";
+                    options.AccessDeniedPath = "/Home/AccessDenied";    //  redirect αν ο χρήστης δεν έχει δικαιώματα
+                    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+                    options.SlidingExpiration = true;   // reset timout
+                    options.Cookie.HttpOnly = true;
+                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;  // μόνο HTTPS
+                });
+
+            builder.Services.AddAuthorizationBuilder()
+                .SetFallbackPolicy(new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .Build());
+            //.AddPolicy("CanViewTeachers", policy => policy.RequireClaim("Capability", "VIEW_TEACHERS"))
+            //.AddPolicy("CanInsertTeacher", policy => policy.RequireClaim("Capability", "INSERT_TEACHER"));
+
+
             builder.Services.AddAutoMapper(cfg => cfg.AddProfile<Configuration.MapperConfig>());
 
             // Add services to the container.
@@ -51,12 +72,14 @@ namespace SchoolApp
             app.UseHttpsRedirection();
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
-            app.MapStaticAssets();
+            app.MapStaticAssets().AllowAnonymous();
+
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}")
+                pattern: "{controller=Home}/{action=Index}")
                 .WithStaticAssets();
 
             app.Run();

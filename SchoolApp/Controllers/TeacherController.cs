@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using SchoolApp.Core;
 using SchoolApp.DTO;
 using SchoolApp.Services;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using Error = SchoolApp.Core.Error;
 
 namespace SchoolApp.Controllers
 {
